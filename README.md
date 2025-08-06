@@ -205,24 +205,6 @@ MindfulMate includes robust crisis detection:
 - 📱 **Crisis Text Line**: Text HOME to 741741
 - 🚑 **Emergency Services**: 911 for immediate danger
 
-## 🎬 Demo & Hackathon
-
-This project is designed for the Gemma 3n hackathon. Key selling points:
-
-### Impact (40% of score)
-- **Global Mental Health Crisis**: 1.9 billion people affected worldwide
-- **Accessibility**: 24/7 support without cost barriers
-- **Privacy**: Safe space for those afraid of stigma
-
-### Technical Innovation (30% of score)
-- **Multimodal AI**: Voice + text emotion detection
-- **On-Device Processing**: Leverages Gemma 3n's edge capabilities
-- **Real-Time Response**: Sub-3-second therapeutic responses
-
-### Demo Appeal (30% of score)
-- **Emotional Stories**: Real user scenarios showing impact
-- **Live Demonstration**: Working voice/text interaction
-- **Crisis Intervention**: Showing life-saving potential
 
 ## 📈 Performance Metrics
 
@@ -251,7 +233,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Mental Health Community**: For guidance on therapeutic protocols
 - **Open Source Contributors**: For the amazing tools and libraries
 
-## 📞 Support
+## 📞 Support(to be done)
 
 For questions or support:
 - 📧 Email: support@mindfulmate.ai
