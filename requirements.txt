@@ -1,0 +1,65 @@
+# MindfulMate - AI Mental Health Companion
+# Core Dependencies for Gemma 3n Integration & Emotion Detection
+
+# === CORE AI & MODEL INTEGRATION ===
+ollama>=0.1.7                    # Ollama client for Gemma 3n integration
+numpy>=1.24.0                    # Numerical computing for emotion analysis
+scipy>=1.10.0                    # Scientific computing for audio processing
+
+# === WEB FRAMEWORK & API ===
+fastapi>=0.104.0                 # Modern web framework for API
+uvicorn[standard]>=0.24.0        # ASGI server for FastAPI
+pydantic>=2.5.0                  # Data validation and settings management
+python-multipart>=0.0.6         # Form data parsing for file uploads
+
+# === AUDIO PROCESSING ===
+librosa>=0.10.1                  # Audio analysis and feature extraction
+soundfile>=0.12.1                # Audio file I/O
+SpeechRecognition>=3.10.0        # Speech-to-text conversion (note: capital S and R)
+pydub>=0.25.1                    # Audio manipulation and format conversion
+
+# === TEXT-TO-SPEECH ===
+pyttsx3>=2.90                    # Cross-platform text-to-speech
+
+# === VIDEO & IMAGE PROCESSING ===
+opencv-python>=4.8.0            # Computer vision for facial expression analysis
+mediapipe>=0.10.7               # Google's ML framework for face detection
+pillow>=10.1.0                   # Image processing library
+
+# === DATA HANDLING & STORAGE ===
+pandas>=2.1.0                    # Data manipulation and analysis
+sqlalchemy>=2.0.0               # SQL toolkit and ORM
+cryptography>=41.0.0             # Encryption for local data privacy
+
+# === ASYNC & CONCURRENCY ===
+aiofiles>=23.2.1                # Async file operations
+websockets>=12.0                 # WebSocket support for real-time communication
+
+# === UTILITIES & HELPERS ===
+python-dotenv>=1.0.0            # Environment variable management
+pyyaml>=6.0.1                    # YAML configuration file parsing
+python-dateutil>=2.8.2          # Date/time utilities
+typing-extensions>=4.8.0        # Extended type hints
+
+# === LOGGING & MONITORING ===
+structlog>=23.2.0               # Structured logging
+colorama>=0.4.6                 # Cross-platform colored terminal output
+
+# === TESTING & DEVELOPMENT ===
+pytest>=7.4.0                   # Testing framework
+pytest-asyncio>=0.21.0          # Async testing support
+pytest-mock>=3.12.0             # Mocking for tests
+black>=23.11.0                   # Code formatting
+flake8>=6.1.0                    # Code linting
+
+# === PRODUCTION & DEPLOYMENT ===
+gunicorn>=21.2.0                # Production WSGI server
+
+# === SECURITY & PRIVACY ===
+bcrypt>=4.1.0                   # Password hashing
+requests>=2.31.0                # HTTP requests
+
+# === AUDIO DEPENDENCIES (OPTIONAL) ===
+# Uncomment these if you want full audio processing:
+# pyaudio>=0.2.11                # Real-time audio input/output (requires system dependencies)
+# webrtcvad>=2.0.10              # Voice activity detection

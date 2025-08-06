@@ -1,0 +1,22 @@
+# MindfulMate - Minimal Requirements for Core Functionality
+# Install these first to get the basic system working
+
+# === CORE REQUIREMENTS ===
+ollama>=0.1.7                    # Gemma 3n integration
+numpy>=1.24.0                    # Numerical computing
+fastapi>=0.104.0                 # API framework
+uvicorn[standard]>=0.24.0        # API server
+pydantic>=2.5.0                  # Data validation
+python-dotenv>=1.0.0            # Environment variables
+pyyaml>=6.0.1                    # Configuration files
+requests>=2.31.0                 # HTTP requests
+
+# === TESTING ===
+pytest>=7.4.0                   # Testing framework
+pytest-asyncio>=0.21.0          # Async testing
+
+# === OPTIONAL AUDIO (uncomment if needed) ===
+# SpeechRecognition>=3.10.0      # Speech-to-text
+# pyttsx3>=2.90                  # Text-to-speech
+# librosa>=0.10.1                # Audio analysis
+# soundfile>=0.12.1              # Audio I/O

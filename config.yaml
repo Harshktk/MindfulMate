@@ -1,0 +1,71 @@
+# ============================================================================
+# FILE: config.yaml
+# Main configuration file for MindfulMate
+# ============================================================================
+
+app:
+  name: "MindfulMate"
+  version: "1.0.0" 
+  description: "AI Mental Health Companion - Private, Empathetic, Available 24/7"
+
+ollama:
+  host: "http://localhost:11434"
+  model: "gemma3n:e4b"  # Your specific model
+  timeout: 120
+  options:
+    temperature: 0.7
+    top_p: 0.9
+    max_tokens: 500
+
+api:
+  host: "localhost"
+  port: 8000
+  debug: true
+  cors_origins: ["*"]
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+conversation:
+  max_history: 20
+  session_timeout: 3600  # 1 hour
+  cleanup_interval: 300   # 5 minutes
+
+emotion_detection:
+  voice_weight: 0.4
+  text_weight: 0.6
+  confidence_threshold: 0.6
+  multimodal_fusion: true
+
+therapeutic:
+  crisis_keywords:
+    - "suicide"
+    - "kill myself"
+    - "end it all"
+    - "hurt myself"
+    - "hopeless"
+    - "worthless"
+    - "better off dead"
+  
+  techniques:
+    anxiety: "breathing_exercise"
+    depression: "behavioral_activation"
+    stress: "grounding_technique"
+    anger: "emotion_regulation"
+    
+  professional_referral:
+    crisis_threshold: "crisis"
+    persistent_sessions: 3
+    extended_session_hours: 2
+
+privacy:
+  local_storage_only: true
+  encrypt_conversations: true
+  auto_delete_after_days: 7
+  no_cloud_sync: true
+  anonymous_mode: true
+
+logging:
+  level: "INFO"
+  file_logging: true
+  console_logging: true
+  log_rotation: true

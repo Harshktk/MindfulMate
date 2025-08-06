@@ -1,0 +1,378 @@
+                </div>
+            </div>
+            
+            <div id="typingIndicator" class="typing-indicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <span id="typingText">MindfulMate is thinking...</span>
+            </div>
+        </main>
+        
+        <section class="input-area">
+            <div id="voiceIndicator" class="voice-indicator">
+                <div>🎤 Listening... Speak now</div>
+                <div style="font-size: 0.8rem; margin-top: 0.25rem;">Tap stop when finished</div>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="quick-action" onclick="sendQuickMessage('anxiety')">😰 Feeling anxious</button>
+                <button class="quick-action" onclick="sendQuickMessage('sad')">😢 Feeling sad</button>
+                <button class="quick-action" onclick="sendQuickMessage('stressed')">😫 Feeling stressed</button>
+                <button class="quick-action" onclick="sendQuickMessage('okay')">😊 I'm okay</button>
+                <button class="quick-action" onclick="sendQuickMessage('breathing')">🫁 Need breathing help</button>
+            </div>
+            
+            <div class="input-controls">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input"
+                    placeholder="Share what's on your mind..."
+                    rows="1"
+                    maxlength="1000"
+                ></textarea>
+                
+                <div class="control-buttons">
+                    <button id="voiceButton" class="btn btn-voice" onclick="toggleVoice()" title="Voice input">
+                        🎤
+                    </button>
+                    <button id="sendButton" class="btn btn-primary" onclick="sendMessage()" title="Send message">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Enhanced Mobile MindfulMate JavaScript
+        class MindfulMateApp {
+            constructor() {
+                this.API_BASE = 'http://localhost:8000';
+                this.currentSessionId = null;
+                this.userId = 'mobile_user_' + Math.random().toString(36).substr(2, 9);
+                this.isRecording = false;
+                this.recognition = null;
+                
+                this.initializeApp();
+            }
+            
+            async initializeApp() {
+                this.setupEventListeners();
+                this.setupVoiceRecognition();
+                await this.checkAPIConnection();
+                this.autoResizeTextarea();
+            }
+            
+            setupEventListeners() {
+                const messageInput = document.getElementById('messageInput');
+                messageInput.addEventListener('input', this.autoResizeTextarea.bind(this));
+                messageInput.addEventListener('keydown', this.handleKeyDown.bind(this));
+                
+                // Prevent zoom on iOS
+                messageInput.addEventListener('touchstart', (e) => {
+                    if (messageInput.style.fontSize !== '16px') {
+                        messageInput.style.fontSize = '16px';
+                    }
+                });
+                
+                // Touch feedback for buttons
+                document.querySelectorAll('.btn, .quick-action').forEach(btn => {
+                    btn.addEventListener('touchstart', () => {
+                        btn.style.transform = 'scale(0.95)';
+                    });
+                    btn.addEventListener('touchend', () => {
+                        setTimeout(() => {
+                            btn.style.transform = '';
+                        }, 100);
+                    });
+                });
+                
+                // Handle visibility changes
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && this.isRecording) {
+                        this.stopVoiceRecording();
+                    }
+                });
+            }
+            
+            setupVoiceRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'en-US';
+                    
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        this.handleVoiceResult(transcript);
+                    };
+                    
+                    this.recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        this.stopVoiceRecording();
+                        this.showSystemMessage('Voice recognition failed. Please try typing your message.');
+                    };
+                    
+                    this.recognition.onend = () => {
+                        this.stopVoiceRecording();
+                    };
+                }
+            }
+            
+            async checkAPIConnection() {
+                const statusBar = document.getElementById('statusBar');
+                
+                try {
+                    const response = await fetch(`${this.API_BASE}/health`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'healthy') {
+                        statusBar.textContent = '✅ Connected and ready to help';
+                        statusBar.className = 'status-bar connected';
+                    } else {
+                        statusBar.textContent = '⚠️ Limited functionality available';
+                        statusBar.className = 'status-bar error';
+                    }
+                } catch (error) {
+                    statusBar.textContent = '❌ Offline mode - Please check connection';
+                    statusBar.className = 'status-bar error';
+                    console.error('API connection failed:', error);
+                }
+            }
+            
+            handleKeyDown(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    this.sendMessage();
+                }
+            }
+            
+            autoResizeTextarea() {
+                const textarea = document.getElementById('messageInput');
+                textarea.style.height = 'auto';
+                const newHeight = Math.min(textarea.scrollHeight, 96); // Max 6rem
+                textarea.style.height = newHeight + 'px';
+            }
+            
+            async sendMessage(messageText = null) {
+                const input = document.getElementById('messageInput');
+                const message = messageText || input.value.trim();
+                
+                if (!message) return;
+                
+                // Clear input and disable controls
+                if (!messageText) {
+                    input.value = '';
+                    this.autoResizeTextarea();
+                }
+                this.setControlsEnabled(false);
+                
+                // Add user message
+                this.addMessage(message, 'user');
+                this.showTypingIndicator();
+                
+                try {
+                    const response = await fetch(`${this.API_BASE}/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: message,
+                            user_id: this.userId,
+                            session_id: this.currentSessionId
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    this.currentSessionId = data.session_id;
+                    
+                    // Add AI response
+                    this.addMessage(data.response, 'ai', {
+                        emotion: data.emotion_detected,
+                        confidence: data.confidence,
+                        risk_level: data.risk_level,
+                        suggested_technique: data.suggested_technique
+                    });
+                    
+                    // Text-to-speech for accessibility
+                    this.speakResponse(data.response);
+                    
+                } catch (error) {
+                    console.error('Send message error:', error);
+                    this.addMessage(
+                        'I apologize, but I encountered a connection error. Please check your internet connection and try again.',
+                        'ai'
+                    );
+                } finally {
+                    this.hideTypingIndicator();
+                    this.setControlsEnabled(true);
+                    this.scrollToBottom();
+                }
+            }
+            
+            async toggleVoice() {
+                if (!this.isRecording) {
+                    await this.startVoiceRecording();
+                } else {
+                    this.stopVoiceRecording();
+                }
+            }
+            
+            async startVoiceRecording() {
+                try {
+                    this.isRecording = true;
+                    this.updateVoiceUI(true);
+                    
+                    if (this.recognition) {
+                        this.recognition.start();
+                    } else {
+                        this.showSystemMessage('Voice recognition not supported in this browser. Please try typing your message.');
+                        this.isRecording = false;
+                        this.updateVoiceUI(false);
+                    }
+                    
+                } catch (error) {
+                    console.error('Voice recording error:', error);
+                    this.showSystemMessage('Unable to access microphone. Please check permissions and try typing instead.');
+                    this.isRecording = false;
+                    this.updateVoiceUI(false);
+                }
+            }
+            
+            stopVoiceRecording() {
+                if (!this.isRecording) return;
+                
+                this.isRecording = false;
+                this.updateVoiceUI(false);
+                
+                if (this.recognition) {
+                    this.recognition.stop();
+                }
+            }
+            
+            updateVoiceUI(recording) {
+                const voiceButton = document.getElementById('voiceButton');
+                const voiceIndicator = document.getElementById('voiceIndicator');
+                
+                if (recording) {
+                    voiceButton.textContent = '⏹️';
+                    voiceButton.classList.add('recording');
+                    voiceIndicator.classList.add('active');
+                    
+                    // Haptic feedback on supported devices
+                    if (navigator.vibrate) navigator.vibrate(50);
+                } else {
+                    voiceButton.textContent = '🎤';
+                    voiceButton.classList.remove('recording');
+                    voiceIndicator.classList.remove('active');
+                }
+            }
+            
+            handleVoiceResult(transcript) {
+                this.addMessage(`🎤 "${transcript}"`, 'user');
+                this.sendMessage(transcript);
+            }
+            
+            speakResponse(text) {
+                if ('speechSynthesis' in window && !document.hidden) {
+                    speechSynthesis.cancel();
+                    
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 0.7;
+                    
+                    speechSynthesis.speak(utterance);
+                }
+            }
+            
+            addMessage(content, sender, emotionData = null) {
+                const messagesContainer = document.getElementById('chatMessages');
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                bubbleDiv.innerHTML = content.replace(/\n/g, '<br>');
+                
+                // Add emotion info for AI messages
+                if (sender === 'ai' && emotionData) {
+                    const emotionDiv = document.createElement('div');
+                    emotionDiv.className = 'emotion-info';
+                    emotionDiv.innerHTML = `
+                        <strong>Detected:</strong> ${emotionData.emotion} (${Math.round(emotionData.confidence * 100)}%) | 
+                        <strong>Risk:</strong> ${emotionData.risk_level} | 
+                        <strong>Approach:</strong> ${emotionData.suggested_technique}
+                    `;
+                    bubbleDiv.appendChild(emotionDiv);
+                }
+                
+                messageDiv.appendChild(bubbleDiv);
+                messagesContainer.appendChild(messageDiv);
+                
+                this.scrollToBottom();
+            }
+            
+            showSystemMessage(message) {
+                this.addMessage(message, 'system');
+            }
+            
+            showTypingIndicator(text = 'MindfulMate is thinking...') {
+                const indicator = document.getElementById('typingIndicator');
+                const textElement = document.getElementById('typingText');
+                textElement.textContent = text;
+                indicator.classList.add('active');
+                this.scrollToBottom();
+            }
+            
+            hideTypingIndicator() {
+                document.getElementById('typingIndicator').classList.remove('active');
+            }
+            
+            setControlsEnabled(enabled) {
+                document.getElementById('sendButton').disabled = !enabled;
+                document.getElementById('voiceButton').disabled = !enabled;
+                document.getElementById('messageInput').disabled = !enabled;
+                
+                document.querySelectorAll('.quick-action').forEach(btn => {
+                    btn.disabled = !enabled;
+                });
+            }
+            
+            scrollToBottom() {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            sendQuickMessage(type) {
+                const quickMessages = {
+                    'anxiety': "I'm feeling really anxious right now. My heart is racing and I can't stop worrying.",
+                    'sad': "I'm feeling very sad and down today. Everything feels overwhelming.",
+                    'stressed': "I'm feeling extremely stressed and overwhelmed with everything I have to do.",
+                    'okay': "I'm doing okay today, just wanted to check in and see how you are.",
+                    'breathing': "I'm having trouble breathing and feel panicky. Can you help me with a breathing exercise?"
+                };
+                
+                this.sendMessage(quickMessages[type]);
+            }
+        }
+        
+        // Global functions for HTML onclick handlers
+        window.sendMessage = () => app.sendMessage();
+        window.toggleVoice = () => app.toggleVoice();
+        window.sendQuickMessage = (type) => app.sendQuickMessage(type);
+        
+        // Initialize app when DOM is loaded
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new MindfulMateApp();
+        });
+    </script>
+</body>
+</html>

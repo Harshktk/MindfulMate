@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindfulMate - AI Mental Health Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .chat-container {
+            height: 400px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            background: #f7fafc;
+            scroll-behavior: smooth;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            background: #48bb78;
+            color: white;
+            margin-right: auto;
+        }
+        
+        .system-message {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            margin: 0 auto;
+            font-style: italic;
+        }
+        
+        .emotion-info {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .input-container input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+        
+        .btn-voice {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .btn-voice:hover:not(:disabled) {
+            background: #dd6b20;
+        }
+        
+        .btn-voice.recording {
+            background: #e53e3e;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .feature {
+            background: #edf2f7;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .feature h3 {
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .feature p {
+            color: #718096;
+            font-size: 0.85rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+            color: #667eea;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .voice-indicator {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(237, 137, 54, 0.1);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            color: #dd6b20;
+        }
+        
+        .voice-indicator.active {
+            display: block;
+        }
+        
+        .demo-controls {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .demo-btn {
+            background: #48bb78;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            margin: 0 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .demo-btn:hover {
+            background: #38a169;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+            
+            .chat-container {
+                height: 300px;
+            }
+            
+            .input-container {
+                flex-direction: column;
+            }
+            
+            .button-group {
+                justify-content: center;
+            }
+            
+            .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 MindfulMate</h1>
+            <p>Your AI Mental Health Companion</p>
+        </div>
+        
+        <div id="status" class="status">
+            Connecting to MindfulMate API...
+        </div>
+        
+        <div class="voice-indicator" id="voiceIndicator">
+            🎤 Listening... Speak now
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message ai-message">
+                Hello! I'm MindfulMate, your AI mental health companion. I'm here to listen and support you in a completely private and safe space.
+                <br><br>
+                You can either type your message or use the voice button to speak with me. How are you feeling today?
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <span class="spinner"></span>
+            <span id="loadingText">Processing your message...</span>
+        </div>
+        
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Share how you're feeling..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="sendMessage()" id="sendButton">Send</button>
+                <button class="btn btn-voice" onclick="toggleVoiceRecording()" id="voiceButton">
+                    🎤 Voice
+                </button>
+            </div>
+        </div>
+        
+        <div class="demo-controls">
+            <button class="demo-btn" onclick="sendDemoMessage('anxiety')">Demo: Anxiety</button>
+            <button class="demo-btn" onclick="sendDemoMessage('depression')">Demo: Depression</button>
+            <button class="demo-btn" onclick="sendDemoMessage('stress')">Demo: Stress</button>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🔒 Private</h3>
+                <p>All conversations stay on your device</p>
+            </div>
+            <div class="feature">
+                <h3>🎭 Emotion-Aware</h3>
+                <p>Understands your emotional state</p>
+            </div>
+            <div class="feature">
+                <h3>🎤 Voice Support</h3>
+                <p>Talk naturally with AI</p>
+            </div>
+            <div class="feature">
+                <h3>🚨 Crisis Support</h3>
+                <p>Immediate help when you need it</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentSessionId = null;
+        let userId = 'web_user_' + Math.random().toString(36).substr(2, 9);
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        
+        // Check API connection on load
+        window.addEventListener('load', async () => {
+            await checkAPIConnection();
+        });
+        
+        async function checkAPIConnection() {
+            const statusElement = document.getElementById('status');
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    statusElement.textContent = '✅ Connected to MindfulMate API';
+                    statusElement.className = 'status connected';
+                } else {
+                    statusElement.textContent = '⚠️ API partially available';
+                    statusElement.className = 'status error';
+                }
+            } catch (error) {
+                statusElement.textContent = '❌ Cannot connect to API. Make sure the server is running on localhost:8000';
+                statusElement.className = 'status error';
+                console.error('API connection failed:', error);
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        async function sendMessage(messageText = null) {
+            const input = document.getElementById('messageInput');
+            const message = messageText || input.value.trim();
+            
+            if (!message) return;
+            
+            // Clear input and disable controls
+            if (!messageText) input.value = '';
+            setControlsEnabled(false);
+            
+            // Show loading
+            showLoading('Processing your message...');
+            
+            // Add user message to chat
+            addMessageToChat(message, 'user');
+            
+            try {
+                // Send to API
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: userId,
+                        session_id: currentSessionId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update session ID
+                currentSessionId = data.session_id;
+                
+                // Add AI response to chat
+                addMessageToChat(data.response, 'ai', {
+                    emotion: data.emotion_detected,
+                    confidence: data.confidence,
+                    risk_level: data.risk_level,
+                    suggested_technique: data.suggested_technique
+                });
+                
+                // Handle crisis situations
+                if (data.professional_help_suggested) {
+                    setTimeout(() => showCrisisResources(), 1000);
+                }
+                
+                // Speak response if supported
+                if ('speechSynthesis' in window) {
+                    speakText(data.response);
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessageToChat('I apologize, but I encountered a connection error. Please make sure the MindfulMate API server is running and try again.', 'ai');
+            } finally {
+                hideLoading();
+                setControlsEnabled(true);
+            }
+        }
+        
+        async function toggleVoiceRecording() {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await processVoiceInput(audioBlob);
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                // Update UI
+                const voiceButton = document.getElementById('voiceButton');
+                const voiceIndicator = document.getElementById('voiceIndicator');
+                
+                voiceButton.textContent = '⏹️ Stop';
+                voiceButton.classList.add('recording');
+                voiceIndicator.classList.add('active');
+                
+                // Auto-stop after 10 seconds
+                setTimeout(() => {
+                    if (isRecording) stopRecording();
+                }, 10000);
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                addMessageToChat('Unable to access microphone. Please check your permissions and try typing instead.', 'system');
+            }
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                // Update UI
+                const voiceButton = document.getElementById('voiceButton');
+                const voiceIndicator = document.getElementById('voiceIndicator');
+                
+                voiceButton.textContent = '🎤 Voice';
+                voiceButton.classList.remove('recording');
+                voiceIndicator.classList.remove('active');
+            }
+        }
+        
+        async function processVoiceInput(audioBlob) {
+            showLoading('Converting speech to text...');
+            
+            // For demo purposes, we'll use the Web Speech API for transcription
+            // In production, you'd send the audio to your API
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                // Use browser's speech recognition for demo
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    hideLoading();
+                    addMessageToChat(`🎤 "${transcript}"`, 'user');
+                    sendMessage(transcript);
+                };
+                
+                recognition.onerror = () => {
+                    hideLoading();
+                    addMessageToChat('Voice recognition failed. Please try typing your message.', 'system');
+                };
+                
+                // Start recognition (this is a workaround since we have the blob)
+                // In a real app, you'd process the audioBlob
+                recognition.start();
+            } else {
+                hideLoading();
+                addMessageToChat('Voice recognition not supported in this browser. Please try typing your message.', 'system');
+            }
+        }
+        
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
+                utterance.volume = 0.8;
+                
+                // Try to use a female voice for therapeutic context
+                const voices = speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => 
+                    voice.name.toLowerCase().includes('female') || 
+                    voice.name.toLowerCase().includes('woman') ||
+                    voice.name.toLowerCase().includes('samantha') ||
+                    voice.name.toLowerCase().includes('karen')
+                );
+                
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+                
+                speechSynthesis.speak(utterance);
+            }
+        }
+        
+        function addMessageToChat(message, sender, emotionData = null) {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = message.replace(/\\n/g, '<br>');
+            
+            // Add emotion information for AI messages
+            if (sender === 'ai' && emotionData) {
+                const emotionDiv = document.createElement('div');
+                emotionDiv.className = 'emotion-info';
+                emotionDiv.innerHTML = `
+                    <strong>Detected:</strong> ${emotionData.emotion} (${(emotionData.confidence * 100).toFixed(0)}% confidence) | 
+                    <strong>Risk:</strong> ${emotionData.risk_level} | 
+                    <strong>Suggested:</strong> ${emotionData.suggested_technique}
+                `;
+                messageDiv.appendChild(emotionDiv);
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function showLoading(text) {
+            const loading = document.getElementById('loading');
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = text;
+            loading.classList.add('active');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+        
+        function setControlsEnabled(enabled) {
+            document.getElementById('sendButton').disabled = !enabled;
+            document.getElementById('voiceButton').disabled = !enabled;
+            document.getElementById('messageInput').disabled = !enabled;
+        }
+        
+        async function showCrisisResources() {
+            try {
+                const response = await fetch(`${API_BASE}/crisis-resources`);
+                const resources = await response.json();
+                
+                const resourceMessage = `
+🚨 <strong>I'm concerned about you. Here are immediate resources:</strong><br><br>
+📞 <strong>Suicide & Crisis Lifeline:</strong> ${resources.immediate_help.suicide_crisis_lifeline.number}<br>
+📱 <strong>Crisis Text Line:</strong> ${resources.immediate_help.crisis_text_line.number}<br>
+🚑 <strong>Emergency:</strong> ${resources.immediate_help.emergency_services.number}<br><br>
+You don't have to go through this alone. Please reach out for help.
+                `;
+                
+                addMessageToChat(resourceMessage.trim(), 'ai');
+                
+            } catch (error) {
+                console.error('Error loading crisis resources:', error);
+                addMessageToChat('If you\'re in crisis, please call 988 (Suicide & Crisis Lifeline) or 911 for immediate help.', 'ai');
+            }
+        }
+        
+        function sendDemoMessage(type) {
+            const demoMessages = {
+                'anxiety': "I'm feeling really anxious about my job interview tomorrow. My heart is racing and I can't stop worrying about what might go wrong.",
+                'depression': "I've been feeling really down lately. Nothing seems to matter anymore and I don't have energy for anything.",
+                'stress': "I'm so overwhelmed with work and family responsibilities. I feel like I'm drowning and can't catch up."
+            };
+            
+            sendMessage(demoMessages[type]);
+        }
+        
+        // Load voices when they become available
+        if ('speechSynthesis' in window) {
+            speechSynthesis.onvoiceschanged = () => {
+                // Voices are now loaded
+            };
+        }
+    </script>
+</body>
+</html>
